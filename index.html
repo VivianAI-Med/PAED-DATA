@@ -1,0 +1,97 @@
+html_content = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Appendicitis Prediction API Client</title>
+    <style>
+        #visualization {
+            margin-top: 20px;
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Appendicitis Prediction</h1>
+
+    <form id="predictionForm">
+        <!-- Add input fields for your features here -->
+        <!-- Example: -->
+        <label for="Age">Age:</label><br>
+        <input type="number" id="Age" name="Age" value="10"><br><br>
+
+        <label for="BMI">BMI:</label><br>
+        <input type="number" id="BMI" name="BMI" step="0.01" value="20.5"><br><br>
+
+        <label for="Sex">Sex:</label><br>
+        <select id="Sex" name="Sex">
+            <option value="female">female</option>
+            <option value="male">male</option>
+        </select><br><br>
+
+        <!-- Add more input fields for other features based on your model's requirements -->
+        <!-- Refer to the original X DataFrame columns for feature names -->
+        <!-- You'll need to add inputs for all 53 original features -->
+
+        <button type="submit">Predict</button>
+    </form>
+
+    <div id="result"></div>
+    <img id="visualization" src="" alt="Visualization will appear here">
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const features = {};
+
+            // Collect form data into a dictionary
+            for (const [key, value] of formData.entries()) {
+                 // Attempt to convert to number if possible, otherwise keep as string
+                const num_value = parseFloat(value);
+                features[key] = isNaN(num_value) ? value : num_value;
+            }
+
+            // Wrap features in the expected structure for the API
+            const apiData = {
+                features: features
+            };
+
+            try {
+                // Replace with your API endpoint URL
+                const response = await fetch('http://127.0.0.1:8000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(apiData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+                }
+
+                const result = await response.json();
+                document.getElementById('result').innerText = 'Prediction: ' + result.prediction;
+
+                if (result.visualization) {
+                    const imgElement = document.getElementById('visualization');
+                    imgElement.src = 'data:image/png;base64,' + result.visualization;
+                    imgElement.style.display = 'block'; // Show the image
+                } else {
+                    document.getElementById('visualization').style.display = 'none'; // Hide if no visualization
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerText = 'Error: ' + error.message;
+                document.getElementById('visualization').style.display = 'none'; // Hide image on error
+            }
+        });
+    </script>
+</body>
+</html>
+"""
